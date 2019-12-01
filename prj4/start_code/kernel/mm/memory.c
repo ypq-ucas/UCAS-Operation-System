@@ -54,9 +54,9 @@ void init_TLB()
 uint32_t TLB_miss_time = 0;
 void do_TLB_Refill()
 {
-    vt100_move_cursor(0,0);
-    printk("-> TLB Exception %d                 ",TLB_miss_time);
-    TLB_miss_time++;
+//    vt100_move_cursor(0,0);
+//    printk("-> TLB Exception %d                 ",TLB_miss_time);
+//    TLB_miss_time++;
 //    current_running->user_context.cp0_epc = current_running->user_context.cp0_epc + 4;
 
     uint32_t CDVG_Flags;
@@ -126,9 +126,9 @@ void do_TLB_Refill()
 uint32_t Page_Fault_time = 0;
 void do_page_fault(uint32_t badvaddr)
 {
-    vt100_move_cursor(0,0);
-    printk("-> Page Fault Exception %d                  ",Page_Fault_time);
-    Page_Fault_time++;
+//    vt100_move_cursor(0,0);
+//    printk("-> Page Fault Exception %d                  ",Page_Fault_time);
+//    Page_Fault_time++;
 
     uint32_t CDVG_Flags;
     CDVG_Flags = ((PTE_C << 3) | (PTE_D << 2) | (PTE_V << 1)) & 0x3f;
@@ -168,9 +168,9 @@ uint32_t SD_Page_Index = 0;
 uint32_t Page_Swap_time = 0;
 void swap_page(uint32_t badvaddr)
 {
-    vt100_move_cursor(0,0);
-    printk("-> Exception: Swap Page %d                      ",Page_Swap_time);
-    Page_Swap_time++;
+//    vt100_move_cursor(0,0);
+//    printk("-> Exception: Swap Page %d                      ",Page_Swap_time);
+//    Page_Swap_time++;
 
     uint32_t CDVG_Flags;
     CDVG_Flags = ((PTE_C << 3) | (PTE_D << 2) | (PTE_V << 1)) & 0x3f;
@@ -180,7 +180,7 @@ void swap_page(uint32_t badvaddr)
     uint32_t entryhi,entrylo0,entrylo1; 
     // FIFO Swap
 
-    // 1. Get item = Physical Memory Block from busy_mem_list.head
+    // 1. Get item = Physical Memory Block form busy_mem_list.head
     pageframe_t *item0, *item1;
     item0 = (pageframe_t *)pmem_queue_dequeue(&busy_mem_list);
     item1 = (pageframe_t *)pmem_queue_dequeue(&busy_mem_list);
@@ -221,13 +221,8 @@ void swap_page(uint32_t badvaddr)
     asm volatile("tlbwi");  
 }
 
-uint32_t Page_Swap_Readback_time = 0;
 void swap_page_readback(uint32_t badvaddr)
 {
-    vt100_move_cursor(0,0);
-    printk("-> Exception: Swap Page %d                      ",Page_Swap_Readback_time);
-    Page_Swap_Readback_time++;
-
     uint32_t CDVG_Flags;
     CDVG_Flags = ((PTE_C << 3) | (PTE_D << 2) | (PTE_V << 1)) & 0x3f;
 

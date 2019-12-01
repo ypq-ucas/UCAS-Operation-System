@@ -15,6 +15,7 @@ void do_semaphore_init(semaphore_t *s, int val)
     }  
 }
 
+
 void do_semaphore_up(semaphore_t *s)
 {
     if(!queue_is_empty(&s->sem_queue))

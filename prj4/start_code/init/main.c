@@ -44,6 +44,8 @@ void init_page_table(void)
 {
 	// free 0M - 8M physical memory size
 	free_physical_scope(0x00000000,0x00800000);
+//	free_physical_scope(0x00001000,0x00010000);
+//	free_physical_scope(0x00110000,0x00800000);
 	// 8M - 15M is reserved for kernel
 	// free 15M - 32M physical memory size
 //	free_physical_scope(0x00f00000,0x01ffffff); // only used in virtual address <= 1GB
@@ -70,7 +72,7 @@ static void init_shell()
 	pcb[1].prev = NULL;	
 	pcb[1].next = NULL;
 
-//	init_stack_space((1 * (8 << 12)),&pcb[1]);
+//	init_stack_space((1 * (8 << 10)),&pcb[1]);
 	
 	pcb[1].kernel_context.regs[31] = (uint32_t)&init_handle;
 	pcb[1].user_context.regs[31] = (uint32_t)&test_shell;
@@ -104,13 +106,13 @@ static void init_pcb()
 		pcb[i].kernel_stack_top = stack_top;
 		stack_top -= STACK_SIZE;
 //		pcb[i].user_stack_top = stack_top;
-		pcb[i].user_stack_top = ((i * (8 << 12)) + (8 * 1024)) - 4;
+		pcb[i].user_stack_top = ((i * (8 << 10)) + (8 * 1024)) - 4;
 //		stack_top -= STACK_SIZE;
 	}
 
 	for(i = 0; i < NUM_MAX_TASK; i++)
 	{
-    	init_stack_space((i * (8 << 12)), &pcb[i]);
+    	init_stack_space((i * (8 << 10)), &pcb[i]);
 	}
 /*
 	for(i = 0;i < NUM_MAX_TASK;i++)
@@ -159,13 +161,13 @@ static void init_exception()
 	init_cp0_status |= 0x1;	
 	
 	// 3. Copy the level 2 exception handling code to 0x80000180
-	bzero((void *)BEV0_EBASE, BEV0_OFFSET);
+//	bzero((void *)BEV0_EBASE, BEV0_OFFSET);
 	memcpy((void *)0x80000000, (void *)TLBexception_handler_begin, TLBexception_handler_end-TLBexception_handler_begin);
 	memcpy((void *)0x80000180, (void *)exception_handler_entry, exception_handler_end-exception_handler_begin);
 
-	bzero((void *)BEV1_EBASE, BEV1_OFFSET);
-	memcpy((void *)0xbfc00000, (void *)TLBexception_handler_begin, TLBexception_handler_end-TLBexception_handler_begin);
-	memcpy((void *)0xbfc00380, (void *)exception_handler_entry, exception_handler_end-exception_handler_begin);
+//	bzero((void *)BEV1_EBASE, BEV1_OFFSET);
+//	memcpy((void *)0xbfc00000, (void *)TLBexception_handler_begin, TLBexception_handler_end-TLBexception_handler_begin);
+//	memcpy((void *)0xbfc00380, (void *)exception_handler_entry, exception_handler_end-exception_handler_begin);
 	
 	// 4. reset CP0_COMPARE & CP0_COUNT register
 	SET_CP0_COUNT(0);

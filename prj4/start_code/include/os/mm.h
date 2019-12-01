@@ -9,12 +9,12 @@
 /* 16MB size of physical memory */
 #define PAGE_SIZE 4096          // 4k
 //#define NUMB_PAGE_FRAME 4096    // 4k
-//#define NUMB_PAGE_FRAME 6400    // 25*256
-#define NUMB_PAGE_FRAME 10    // only used in bonus
+#define NUMB_PAGE_FRAME 6400    // 25*256
 
 /* 8MB size of virtual memory */
-#define NUMB_VPAGE 4096 // from 0x0 - 0x00ff ffff  sum 16MB
-//#define NUMB_VPAGE 524288 // from 0x0 - 0x7fff ffff  sum 2GB
+//#define NUMB_VPAGE 4096 // 4k sum 4k * 4KB = 16MB
+//#define NUMB_VPAGE 1048576 // from 0x0 - 0xffff ffff  sum 4GB
+#define NUMB_VPAGE 524288 // from 0x0 - 0x7fff ffff  sum 2GB
 //#define NUMB_VPAGE 262144 // from 0x0 - 0x3fff ffff  sum 1GB
 //#define NUMB_VPAGE 131072 // from 0x0 - 0x1fff ffff  sum 512MB
 //#define NUMB_VPAGE (1024 * 1024) // 1M sum 1M * 4KB = 4GB
