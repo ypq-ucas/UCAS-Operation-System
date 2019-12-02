@@ -98,7 +98,7 @@ void sys_reflush();
 void sys_ps();
 void sys_clear();
 
-void sys_spawn(task_info_t *task);
+void sys_spawn(task_info_t *task,int *a);
 void sys_kill(pid_t pid);
 void sys_exit();
 void sys_waitpid(pid_t pid);

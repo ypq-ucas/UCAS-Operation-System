@@ -13,18 +13,18 @@ int rand()
 	return current_time % 100000;
 }
 
-static void disable_interrupt()
+/*static void disable_interrupt()
 {
-    uint32_t cp0_status = GET_CP0_STATUS();
+    uint32_t cp0_status = get_cp0_status();
     cp0_status &= 0xfffffffe;
-    SET_CP0_STATUS(cp0_status);
+    set_cp0_status(cp0_status);
 }
 
 static void enable_interrupt()
 {
-    uint32_t cp0_status = GET_CP0_STATUS();
+    uint32_t cp0_status = get_cp0_status();
     cp0_status |= 0x01;
-    SET_CP0_STATUS(cp0_status);
+    set_cp0_status(cp0_status);
 }
 
 static char read_uart_ch(void)
@@ -39,79 +39,34 @@ static char read_uart_ch(void)
     }
     return ch;
 }
+*/
 
-void scanf(int *n)
-{
-    char str[20];
-    int i = 0;
-
-	int temp;
-
-	disable_interrupt();
-	screen_reflush();	
-
-	vt100_move_cursor(0,3);	
-	printk("                             ");
-	vt100_move_cursor(0,3);	
-
-	while (1)
-    {
-        // read command from UART port
-        char ch = read_uart_ch();       
-
-        if(ch == 0)
-            continue;
-
-        if(ch != '\r')
-        {
-            str[i++] = ch;
-            printk("%c",ch); 
-        }
-        else
-        {
-            str[i++] = ' ';
-            str[i] = '\0';
-			temp = atox(str);
-			*n = temp;
-			break;
-        }      
-    }
-	enable_interrupt();    
-}
-
-void rw_task1()
+void rw_task1(unsigned long a[6])
 {
 	int mem1, mem2 = 0;
-	int curs = 4;
+	int curs = 0;
 	int memory[RW_TIMES];
 	int i = 0;
 	for(i = 0; i < RW_TIMES; i++)
 	{
-		sys_move_cursor(0, 1);
-		printf("input write address %d:  ",i);
-
-		scanf(&mem1);
-
-		sys_move_cursor(0, curs+i);
+		vt100_move_cursor(1, curs+i);
+		mem1 = a[i];
+		vt100_move_cursor(1, curs+i);
 		memory[i] = mem2 = rand();
-
 		*(int *)mem1 = mem2;
-		printf("-> Write: 0x%x, %d", mem1, mem2);
+		printf("Write: 0x%x, %d\n", mem1, mem2);
 	}
-	curs += RW_TIMES;
+	curs = RW_TIMES;
 	for(i = 0; i < RW_TIMES; i++)
 	{
-		sys_move_cursor(0, 1);
-		printf("input read address %d:  ",i);
-		scanf(&mem1);
-		sys_move_cursor(0, curs+i);
-
+		vt100_move_cursor(1, curs+i);
+		mem1 = a[RW_TIMES+i];
+		vt100_move_cursor(1, curs+i);
 		memory[i+RW_TIMES] = *(int *)mem1;
-
 		if(memory[i+RW_TIMES] == memory[i])
-			printf("-> Read succeed: %d, address: 0x%x", memory[i+RW_TIMES],mem1);
+			printf("Read succeed: %d\n", memory[i+RW_TIMES]);
 		else
-			printf("-> Read error: %d, addrress: 0x%x", memory[i+RW_TIMES],mem1);
+			printf("Read error: %d\n", memory[i+RW_TIMES]);
 	}
 	while(1);
 	//Input address from argv.

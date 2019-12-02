@@ -296,7 +296,7 @@ void recycle(pid_t pid)
     pcb_valid[i] = 0;
 }
 
-void do_spawn(task_info_t *task)
+void do_spawn(task_info_t *task, int *a)
 {
     int i = 0;
     while(pcb_valid[i] && i < NUM_MAX_TASK)
@@ -309,6 +309,8 @@ void do_spawn(task_info_t *task)
     }
 
     pcb_valid[i] = 1;
+
+    pcb[i].user_context.regs[4] = a;
 
 	pcb[i].pid = process_id++;
 	pcb[i].type = task->type;

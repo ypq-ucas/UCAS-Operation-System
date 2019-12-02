@@ -57,9 +57,9 @@ void sys_clear()
     invoke_syscall(SYSCALL_CLEAR,IGNORE,IGNORE,IGNORE);
 }
 
-void sys_spawn(task_info_t *task)
+void sys_spawn(task_info_t *task, int *a)
 {
-    invoke_syscall(SYSCALL_SPAWN,(int)task,IGNORE,IGNORE);
+    invoke_syscall(SYSCALL_SPAWN,(int)task,(int)a,IGNORE);
 }
 
 void sys_kill(pid_t pid)

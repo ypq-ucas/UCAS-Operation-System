@@ -43,7 +43,8 @@ extern exit_process_numb;
 void init_page_table(void)
 {
 	// free 0M - 8M physical memory size
-	free_physical_scope(0x00000000,0x00800000);
+//	free_physical_scope(0x00000000,0x00001000);
+	free_physical_scope(0x00012000,0x00800000);
 //	free_physical_scope(0x00001000,0x00010000);
 //	free_physical_scope(0x00110000,0x00800000);
 	// 8M - 15M is reserved for kernel

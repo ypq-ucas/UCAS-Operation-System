@@ -337,9 +337,11 @@ END(handle_syscall)
 
 NESTED(handle_TLB, 0, sp)
 	mtc0	zero, CP0_PAGEMASK
+    RESTORE_CONTEXT(KERNEL)
 	nop
 	jal		do_TLB_Refill
 	nop
+    SAVE_CONTEXT(KERNEL)
 	RESTORE_CONTEXT(USER)
 	STI
 	eret

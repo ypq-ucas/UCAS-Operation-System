@@ -55,6 +55,8 @@ pageframe_t physical_mem[NUMB_PAGE_FRAME];  // my used physical memory
 queue_t free_mem_list;      // save free physical memory frames
 queue_t busy_mem_list;      // save busy physical memory frames
 
+extern unsigned long address[6];
+
 extern uint32_t pmem_distribute_index;
 
 extern uint32_t SD_Base;

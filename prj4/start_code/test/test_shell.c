@@ -65,6 +65,7 @@ static struct task_info *test_tasks[2] = {&task1, &task2};
 
 static int num_test_tasks = 2;
 
+unsigned long address[6];
 int do_cmd(char cmd[20], int argc, char argv[10][20])
 {
     switch (argc)
@@ -96,7 +97,7 @@ int do_cmd(char cmd[20], int argc, char argv[10][20])
         else if(!strcmp(cmd,"exec"))
         {
             int i = atoi(argv[0]);
-            sys_spawn(test_tasks[i]);
+            sys_spawn(test_tasks[i],0);
         }
         else if(!strcmp(cmd,"kill"))
         {
@@ -108,6 +109,18 @@ int do_cmd(char cmd[20], int argc, char argv[10][20])
             printf("Unknown Command\n");
         }
         break;
+    case 8:
+        if(!strcmp(cmd,"exec"))
+        {
+            int i = atoi(argv[0]);
+            int j;
+            for(j = 0; j < 6; j++)
+            {
+                address[j] = atox(argv[j+1]);
+            }
+            sys_spawn(test_tasks[i],&address);            
+        }
+        break;
 
     default:
             printf("Unkonwn Command\n");
@@ -116,7 +129,7 @@ int do_cmd(char cmd[20], int argc, char argv[10][20])
 
 }
 
-void analysis_cmd(char cmd[20], int *argc, char argv[10][20])
+void analysis_cmd(char cmd[200], int *argc, char argv[10][20])
 {
     int i = 0;
     int j = 0;
@@ -145,7 +158,7 @@ void analysis_cmd(char cmd[20], int *argc, char argv[10][20])
 
 void test_shell()
 {
-    char cmd[20];
+    char cmd[200];
     int i = 0;
 
     int argc;

@@ -149,7 +149,7 @@ void do_ps(void);
 void do_clear(void);
 void do_clear_all(void);
 
-void do_spawn(task_info_t *task);
+void do_spawn(task_info_t *task,int *a);
 void do_kill(pid_t pid);
 void do_exit(void);
 void do_wait(pid_t pid);
