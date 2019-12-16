@@ -8,9 +8,10 @@
 #define TEST_REGS3
 #define GMAC_BASE_ADDR (0xbfe10000)
 #define DMA_BASE_ADDR (0xbfe11000)
-#define PSIZE (256)
+#define PSIZE (20)
 #define PNUM (256)
 //#define PNUM (64)
+#define BONUS_CYCLE (150)
 
 extern queue_t recv_block_queue;
 extern uint32_t recv_flag[PNUM];
@@ -38,7 +39,8 @@ int (*mac_irq_handler[4])();
 #define RDES0_OWN   (1 << 31)   // Own By DMA
 
 // RDES1
-#define RDES1_RBS1  (1024)      // Buffer1 Size        
+#define RDES1_RBS1  (80)      // Buffer1 Size 
+//#define RDES1_RBS1  (1024)      // Buffer1 Size        
 #define RDES1_RCH   (1 << 24)   // Chain or Ring
 #define RDES1_RER   (1 << 25)   // Last of Ring  
 #define RDES1_FS    (1 << 29)   // First Segment
@@ -84,11 +86,9 @@ typedef struct desc
 
 extern desc_t TX_Desc[PNUM];   // DMA Send Descriptor
 extern desc_t RX_Desc[PNUM];   // DMA Recv Descriptor
-extern desc_t RV_Desc[PNUM];   // OK Recv Descriptor
 
 extern uint32_t TX_Buffer[PNUM][PSIZE];  // DMA Send Buffer
 extern uint32_t RX_Buffer[PNUM][PSIZE];  // DMA Recv Buffer
-extern uint32_t RV_Buffer[PNUM][PSIZE];  // OK Recv Buffer
 
 typedef struct mac
 {

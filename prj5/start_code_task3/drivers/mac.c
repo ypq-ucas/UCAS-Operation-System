@@ -9,9 +9,11 @@ uint32_t mac_cnt = 0;
 
 desc_t TX_Desc[PNUM];   // DMA Send Descriptor
 desc_t RX_Desc[PNUM];   // DMA Recv Descriptor
+desc_t RV_Desc[PNUM];   // OK Recv Descriptor
 
 uint32_t TX_Buffer[PNUM][PSIZE];  // DMA Send Buffer
 uint32_t RX_Buffer[PNUM][PSIZE];  // DMA Recv Buffer
+uint32_t RV_Buffer[PNUM][PSIZE];  // OK Buffer
 
 extern desc_t *Handle_Recv_Desc;
 extern uint32_t Recv_count;
@@ -111,22 +113,56 @@ static void mii_dul_force(mac_t *mac)
 }
 
 int ok_count;
-int bonus_count;
 int handle_bad_package(mac_t *test_mac)
 {
-    bonus_count++;
+    int bad_count = 0;
+    int i,j;
+
+    for(i = 0; i < PNUM; i++)
+        recv_flag[i] = 0;
+
+    for(i = 0; i < PNUM; i++)
+    {
+        if(RX_Buffer[i][0] != 0xb57b5500 & RX_Buffer[i][1] != 0x5a70f77d)
+        {
+            recv_flag[i] = 2;   // bad_package
+            bad_count++;
+        }
+        else
+        {
+             recv_flag[i] = 1;   // ok
+        } 
+    }
 
     sys_move_cursor(0, 0);
-    printf("Current Bonus Count = %d            ",bonus_count);
+    printf("Recv_count = %d, bad_count = %d            ",i,bad_count);
 
-    if(bonus_count == BONUS_CYCLE)
-        return 1;
-    else
+    if(bad_count > 0)
     {
-        sys_net_recv(test_mac->rd, test_mac->rd_phy, test_mac->daddr);
-        return 0;
-    }                        
+        for(i = 0; i < PNUM & ok_count < PNUM; i++)
+        {
+            if(recv_flag[i] == 1)   // ok
+            {
+                RV_Desc[ok_count] = RX_Desc[i];
+                for(j = 0; j < PSIZE;j++)
+                    RV_Buffer[ok_count][j] = RX_Buffer[i][j];
+                ok_count++;
+            }
+        }
 
+        sys_move_cursor(0,11);
+        printf("ok_count = %d                   ",ok_count);
+
+        if(ok_count == PNUM)
+            return 1;
+        else
+        {
+            sys_net_recv(test_mac->rd, test_mac->rd_phy, test_mac->daddr);
+            return 0;
+        }                        
+    }
+    else
+        return 1;
 }
 
 
@@ -147,14 +183,30 @@ void irq_enable(int IRQn)
     reg_write_32(INT1_EN_ADDR, 0x8);
 }
 
+
 void mac_recv_handle(mac_t *test_mac)
 {
 
     while(!handle_bad_package(test_mac))
         sys_wait_recv_package();
 
-    sys_move_cursor(1, 4);
-    printf("Recved Sum  = %d * %d = %d packages",bonus_count,PNUM,bonus_count*PNUM);
+    desc_t *recv = NULL;
+    uint32_t *recv_buffer;
+
+    int valid_num = 0;
+    int i;
+    for (i = 0; i < PNUM; i++)
+    {
+
+        sys_move_cursor(1, 3);
+        printf("\n%d recv buffer,r_desc( 0x%x) =0x%x:          \n", i, &RV_Desc[i], RV_Desc[i].tdes0);
+
+        valid_num += printf_recv_buffer((uint32_t *)(&RV_Buffer[i]));
+        sys_sleep(1);
+        printf("\n"); 
+    }
+    sys_move_cursor(1, 3);
+    printf("\nrecv valid %d packages!                          \n", valid_num);
 
 }
 
