@@ -49,7 +49,7 @@
 
 #define FS_MAGIC_NUMBER 0x88486666  // File System Magic Number
 #define MAX_DIR_BLOCK   (26)        // MAX Number of Direct Blocks
-#define MAX_DIRECTIONS  (62)        // MAX ENTRYS IN A DIRECTION
+#define MAX_DIRECTIONS  (64)        // MAX ENTRYS IN A DIRECTION
 
 typedef struct superblock
 {
@@ -69,50 +69,45 @@ typedef struct superblock
     uint32_t datablock_numb;        // DataBlock Number
 
     uint32_t magic_number;          // File System Magic Number
-
-    uint8_t Reserved[468];          // Padding
 }superblock_t;
 
 // sum 128 Bytes
 typedef struct inode{
     uint32_t inode_id;                  // inode ID
-    uint32_t mode;                      // File Mode
-    uint32_t used_size;                 // Used Size
+    uint16_t mode;                      // File Mode
+    uint16_t used_size;                 // Used Size
     uint32_t create_time;               // file create time
     uint32_t modify_time;               // last modify time
     uint32_t direct[MAX_DIR_BLOCK];     // Direct Blocks 
     uint32_t Indirect;                  // Indirect Blocks 
     uint32_t Double_Indirect;           // Double Indirect
-    uint8_t  Reserved[96];              // Padding
 } inode_t;
 
-// sum 64 Bytes
 typedef struct dentry
 {
     uint32_t inode_id;
     char fname[60];
-}dentry_t;                              // denrty size = 64 Bytes
+}dentry_t;                              // denrty size = 128 Bytes
 
-// sum 4K Bytes
 typedef struct C_dentry
 {
-    dentry_t Direction[62];           // size = 4K Bytes, up to 64 files
-    char current_path[124];
+    dentry_t Direction[64];           // size = 4K Bytes, up to 64 files
+    char current_path[100];
     uint32_t inode_id;    
 }C_dentry_t;
-
-// uint8_t SPACE[];
-
-superblock_t superblock;            // SuperBlock, 512 Bytes
-inode_t inode;                      // inode, 512 Bytes
 
 inode_t Current_Inode;                  
 C_dentry_t Current_Direction;         
 
-uint8_t ZERO_BUFF[4096];            // 4K Bytes 0
-uint8_t inode_map_buff[4096];       // 4K Bytes
-inode_t inode_buff;                 // 512 Bytes
-C_dentry_t Direction_buff;          // 4K Bytes
+superblock_t superblock;            // SuperBlock
+inode_t inode;                      // inode
+
+extern uint32_t global_inode_id;
+
+uint8_t ZERO_BUFF[4096];           // 4K Bytes 0
+uint8_t inode_map_buff[4096];
+inode_t inode_buff;
+C_dentry_t Direction_buff;
 
 // Direction Operations
 int mkfs(void);

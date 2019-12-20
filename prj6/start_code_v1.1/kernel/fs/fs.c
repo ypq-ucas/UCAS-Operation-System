@@ -28,11 +28,10 @@
 #include "type.h"
 #include "fs.h"
 
+uint32_t global_inode_id = 0;
+
 uint32_t root_inode_addr;
 uint32_t root_direction_addr;
-
-uint32_t write_dest, write_src, write_size;
-uint32_t read_dest, read_src, read_size;
 
 int do_print_info(void)
 {
@@ -63,9 +62,9 @@ void init_superblock(void)
     sdwrite(&superblock, FS_START_ADDR + 512, sizeof(superblock_t));    // Back SuperBlock
 
     uint32_t zero_start;
-    zero_start = superblock.start_addr + 1024;                          // 2 * 512 for 2 superblocks
+    zero_start = superblock.start_addr + 512 + sizeof(superblock_t);
 
-    sdwrite(&ZERO_BUFF, zero_start, 4096 - 1024);
+    sdwrite(&ZERO_BUFF, zero_start, 4096 - sizeof(superblock_t));
 }
 
 void init_blockmap(void)
@@ -133,12 +132,15 @@ int get_root_direction(void)
 int init_root_direction(void)
 {
     // Create Root Dir
+
+    root_inode_addr = superblock.inode_addr;
+    root_direction_addr = superblock.datablock_addr;
     
-    uint32_t inode_numb = search_inode_map();
-    uint32_t inode_addr = superblock.inode_addr + inode_numb * INODE_SIZE;
-    uint32_t data_addr = superblock.datablock_addr + inode_numb * BLOCK_SIZE;
+    uint32_t avilable_inode_numb = search_inode_map();
+    uint32_t avilable_inode_addr = superblock.inode_addr + avilable_inode_numb * INODE_SIZE;
+    uint32_t avilable_datablock_addr = superblock.datablock_addr + avilable_inode_numb * BLOCK_SIZE;
     
-    if(inode_numb == -1)
+    if(avilable_inode_numb == -1)
     {
         printk(">[ERROR] No Enough Inode Space       \n");
         screen_reflush();
@@ -151,30 +153,26 @@ int init_root_direction(void)
     inode_buff.used_size = 0;
     inode_buff.Indirect = 0;
     inode_buff.Double_Indirect = 0;
-    inode_buff.inode_id = inode_numb;
+    inode_buff.inode_id = avilable_inode_numb;
 
     int i,j;    
     for(i = 0; i < MAX_DIR_BLOCK; i++)
         inode_buff.direct[i] = 0;
 
-    sdwrite(&inode_buff, inode_addr, sizeof(inode_t));
+    sdwrite(&inode_buff, avilable_inode_addr, sizeof(inode_t));
 
-    Direction_buff.inode_id = inode_numb;
-
+    Direction_buff.inode_id = inode_buff.inode_id;
     strcpy(Direction_buff.Direction[0].fname, ".");
     Direction_buff.Direction[0].inode_id = Direction_buff.inode_id;
-
     strcpy(Direction_buff.Direction[1].fname, "..");        
     Direction_buff.Direction[1].inode_id = Direction_buff.inode_id;
-
     for(i = 2; i < MAX_DIRECTIONS; i++)
         strcpy(Direction_buff.Direction[i].fname, "\0");
-
     strcpy(Direction_buff.current_path, "/");         
 
-    sdwrite(&Direction_buff, data_addr, sizeof(C_dentry_t));
-    sdread(&Current_Direction, data_addr, sizeof(C_dentry_t));
-//    memcpy(&Current_Direction, &Direction_buff, sizeof(C_dentry_t));           
+    sdwrite(&Direction_buff, avilable_datablock_addr, sizeof(C_dentry_t));
+
+    memcpy(&Current_Direction, &Direction_buff, sizeof(C_dentry_t));           
 }
 
 void print_superblock_info(void)
@@ -230,7 +228,7 @@ int mkfs(void)
 int mkdir(char *dir_name)
 {
     // Create Dir
-    int i;
+    int i,j;
     for(i = 0; i < 64; i++)
         if(!strcmp(dir_name,Current_Direction.Direction[i].fname))
         {
@@ -239,24 +237,13 @@ int mkdir(char *dir_name)
             return 0;  
         }
 
-    int j;
-    for(j = 2; j < MAX_DIRECTIONS; j++)
-        if(Current_Direction.Direction[j].fname[0] == '\0')
-            break;
-    if(j == MAX_DIRECTIONS)
-    {
-        my_printf(">[ERROR] No Enough Direction Space       \n");
-        screen_reflush();        
-        return 0;
-    }
-
-    uint32_t inode_numb = search_inode_map();
-    uint32_t inode_addr = superblock.inode_addr + inode_numb * INODE_SIZE;
-    uint32_t data_addr = superblock.datablock_addr + inode_numb * BLOCK_SIZE;
-    my_printf("inode_numb = %d\n",inode_numb);
+    uint32_t avilable_inode_numb = search_inode_map();
+    my_printf("avilable_inode_numb = %d\n",avilable_inode_numb);
     screen_reflush();
+    uint32_t avilable_inode_addr = superblock.inode_addr + avilable_inode_numb * INODE_SIZE;
+    uint32_t avilable_datablock_addr = superblock.datablock_addr + avilable_inode_numb * BLOCK_SIZE;
 
-    if(inode_numb == -1)
+    if(avilable_inode_numb == -1)
     {
         my_printf(">[ERROR] No Enough Inode Space       \n");
         screen_reflush();
@@ -269,17 +256,16 @@ int mkdir(char *dir_name)
     inode_buff.used_size = 0;
     inode_buff.Indirect = 0;
     inode_buff.Double_Indirect = 0;
-    inode_buff.inode_id = inode_numb;
+    inode_buff.inode_id = avilable_inode_numb;
     for(i = 0; i < MAX_DIR_BLOCK; i++)
         inode_buff.direct[i] = 0;
 
-    sdwrite(&inode_buff, inode_addr, sizeof(inode_t));
+    sdwrite(&inode_buff, avilable_inode_addr, sizeof(inode_t));
 
-    Direction_buff.inode_id = inode_numb;
+    Direction_buff.inode_id = inode_buff.inode_id;
 
     strcpy(Direction_buff.Direction[0].fname, ".");
     Direction_buff.Direction[0].inode_id = Direction_buff.inode_id;
-
     strcpy(Direction_buff.Direction[1].fname, "..");        
     Direction_buff.Direction[1].inode_id = Current_Direction.inode_id;
 
@@ -289,6 +275,7 @@ int mkdir(char *dir_name)
     for(i = 2; i < MAX_DIRECTIONS; i++)
         strcpy(Direction_buff.Direction[i].fname, "\0");
 
+    char dname[100];
     if(!strcmp(Current_Direction.current_path,"/"))
     {   
         strcpy(Direction_buff.current_path, Current_Direction.current_path);         
@@ -300,24 +287,26 @@ int mkdir(char *dir_name)
         strcpy(Direction_buff.current_path + strlen(Direction_buff.current_path), "/");                 
         strcpy(Direction_buff.current_path + strlen(Direction_buff.current_path), dir_name);
     }
-       
-    sdwrite(&Direction_buff, data_addr, sizeof(C_dentry_t));
+    
 
-    my_printf("DB[0].id = %d, DB[0].f = %s     \n",Direction_buff.Direction[0].inode_id, Direction_buff.Direction[0].fname);
-    my_printf("DB[1].id = %d, DB[1].f = %s     \n",Direction_buff.Direction[1].inode_id, Direction_buff.Direction[1].fname);
-    screen_reflush();
+    uint32_t Direction_buff_addr = superblock.datablock_addr + Direction_buff.inode_id * BLOCK_SIZE;    
+    sdwrite(&Direction_buff, Direction_buff_addr, sizeof(C_dentry_t));
 
-    strcpy(Current_Direction.Direction[j].fname, dir_name);
-    Current_Direction.Direction[j].inode_id = Direction_buff.inode_id;
+    for(i = 2; i < MAX_DIRECTIONS; i++)
+        if(Current_Direction.Direction[i].fname[0] == '\0')
+            break;
+    if(i == MAX_DIRECTIONS)
+    {
+        my_printf(">[ERROR] No Enough Direction Space       \n");
+        screen_reflush();        
+        return 0;
+    }
 
-    my_printf("j = %d , C[j].fname = %s\n", j, Current_Direction.Direction[j].fname);
-    screen_reflush();
+    strcpy(Current_Direction.Direction[i].fname, dir_name);
+    Current_Direction.Direction[i].inode_id = Direction_buff.inode_id;
 
-//    uint32_t Current_inode_addr = superblock.inode_addr + Current_Direction.inode_id * INODE_SIZE;
-    uint32_t Current_data_addr = superblock.datablock_addr + Current_Direction.inode_id * BLOCK_SIZE;
-
-//    sdwrite(&Current_Inode, inode_addr, sizeof(inode_t));
-    sdwrite(&Current_Direction, Current_data_addr, sizeof(C_dentry_t));               
+    uint32_t Current_Direction_data_addr = superblock.datablock_addr + Current_Direction.inode_id * BLOCK_SIZE;
+    sdwrite(&Current_Direction, Current_Direction_data_addr, sizeof(C_dentry_t));               
 }
 
 int rmdir(char *dir_name)
@@ -333,7 +322,7 @@ int read_dir(void)
     int i;
     for(i = 0; i < MAX_DIRECTIONS; i++)
     {
-        if(strcmp(Current_Direction.Direction[i].fname,"\0"))
+        if(Current_Direction.Direction[i].fname[0] != '\0')
             my_printf("%s   ",Current_Direction.Direction[i].fname);
     }
     my_printf("\n");
@@ -353,17 +342,10 @@ int enter_fs(char *path)
     uint32_t data_addr  = superblock.datablock_addr + inode_numb * BLOCK_SIZE;
 
     sdwrite(&Current_Inode, inode_addr, sizeof(inode_t));
-
-    write_dest = data_addr;
-    write_src = &Current_Direction;
-    write_size = sizeof(C_dentry_t);
-//    my_printf("w_src = 0x%x, w_dest = 0x%x, w_size = 0x%x\n",write_src,write_dest,write_size);
-//    screen_reflush();      
-//    sdwrite(write_src, write_dest, write_size);
     sdwrite(&Current_Direction, data_addr, sizeof(C_dentry_t));
 
     int i;
-    for(i = 0; i < MAX_DIRECTIONS; i++)
+    for(i = 0; i < 64; i++)
     {
         if(!strcmp(path,Current_Direction.Direction[i].fname))
         {
@@ -375,21 +357,10 @@ int enter_fs(char *path)
             screen_reflush();   
 
             sdread(&Current_Inode, inode_addr, sizeof(inode_t));
-
-            read_dest = &Current_Direction;
-            read_src = data_addr;
-            read_size = sizeof(C_dentry_t);
-//            my_printf("r_src = 0x%x, r_dest = 0x%x, r_size = 0x%x\n",read_dest,read_src,read_size);
-//            screen_reflush();    
             sdread(&Current_Direction, data_addr, sizeof(C_dentry_t));
 
-            my_printf("CD_D[0].id = %d, CD_D[0].f = %s     \n",Current_Direction.Direction[0].inode_id, Current_Direction.Direction[0].fname);
-            my_printf("CD_D[1].id = %d, CD_D[1].f = %s     \n",Current_Direction.Direction[1].inode_id, Current_Direction.Direction[1].fname);
-
             my_printf("Current_inode_numb = %d             \n",Current_Direction.inode_id);
-            screen_reflush();
-
-            break;  
+            screen_reflush();  
         }
     }
 }
