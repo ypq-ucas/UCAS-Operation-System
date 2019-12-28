@@ -689,10 +689,13 @@ int do_cat_link(int index)
 {
     int i;
 
-    uint32_t inode_numb = Current_Direction->Direction[index].inode_id;
-    uint32_t inode_addr = superblock->inode_addr + inode_numb * INODE_SIZE;
-    uint32_t data_addr = superblock->datablock_addr + inode_numb * BLOCK_SIZE;
+    uint32_t inode_numb, inode_addr, data_addr;
 
+    inode_numb = Current_Direction->Direction[index].inode_id;
+    inode_addr = superblock->inode_addr + inode_numb * INODE_SIZE;
+    data_addr = superblock->datablock_addr + inode_numb * BLOCK_SIZE;
+
+//    my_printf("data_addr = 0x%x\n", data_addr);
     sdread(inode_buff, inode_addr, sizeof(inode_t));
     sdread(File_Buff, data_addr, BLOCK_SIZE);     
     uint32_t file_size = inode_buff->used_size;
@@ -701,7 +704,18 @@ int do_cat_link(int index)
     char fname[30];
     memcpy(path, File_Buff, file_size);
     int k = file_size;
-    while(path[k] != '/')
+
+/*
+    my_printf("path = %s, file_size = %d\n", path, file_size);
+    for(i = 0; i < file_size; i++)
+    {
+        my_printf("%c",File_Buff[i]);
+        screen_reflush();          
+    }
+    my_printf("\n");
+*/
+
+    while(path[k] != ' ')
         k--;
     path[k] = 0;
 
@@ -711,18 +725,20 @@ int do_cat_link(int index)
     while(path[k] != 0 & (k < file_size))
     fname[i++] = path[k++];
     fname[i] = 0;
-
+//    my_printf("fname = %s\n", fname);;
     buff_enter_fs(path);
 
-    i;
+
     for(i = 0; i < MAX_DIRECTIONS; i++)
         if(!strcmp(fname, Direction_buff->Direction[i].fname))
         {
+//            my_printf("path = %s, fname = %s\n", path, Direction_buff->Direction[i].fname);
+
             if(Direction_buff->Direction[i].type == F_TYPE)
                 break;
             else
             {
-                my_printf(">[ERROR] %s Is Does not exist       \n",Current_Direction->Direction[i].fname);
+                my_printf(">[ERROR] %s Is Does not exist       \n",Direction_buff->Direction[i].fname);
                 screen_reflush();        
                 return 0;                
             }
@@ -735,7 +751,7 @@ int do_cat_link(int index)
         return 0;
     }
 
-    inode_numb = Current_Direction->Direction[i].inode_id;
+    inode_numb = Direction_buff->Direction[i].inode_id;
     inode_addr = superblock->inode_addr + inode_numb * INODE_SIZE;
     data_addr = superblock->datablock_addr + inode_numb * BLOCK_SIZE;
 
@@ -914,8 +930,35 @@ int frename(char *old_fname, char *new_fname)
 int ffind(char *path, char *fname)
 {
     // find file
-    vt100_move_cursor(1, 1);
-    printk("ffind                                ");
+    int i;
+    if(path[0] == '\0')
+    {
+        for(i = 0; i < MAX_DIRECTIONS; i++)
+        {
+            if(!strcmp(Current_Direction->Direction[i].fname, fname))
+                my_printf("%s   ",Current_Direction->Direction[i].fname);
+        }
+        my_printf("\n");
+    }
+    else
+    {
+        memcpy(Direction_buff, Current_Direction, sizeof(C_dentry_t));
+
+        if(buff_enter_fs(path) != -1)
+        {
+            for(i = 0; i < MAX_DIRECTIONS; i++)
+            {
+                if(!strcmp(Direction_buff->Direction[i].fname, fname))
+                    my_printf("%s   ",Direction_buff->Direction[i].fname);
+            }
+            my_printf("\n");
+        }
+        else
+        {
+            my_printf(">[ERROR] No Such Direction      \n");
+            screen_reflush();
+        }       
+    }  
 }
 
 int flink_hard(char *target, char *link)
@@ -968,6 +1011,7 @@ int flink_hard(char *target, char *link)
     inode_numb = Current_Direction->inode_id;
     uint32_t data_addr = superblock->datablock_addr + inode_numb * BLOCK_SIZE;
     sdwrite(Current_Direction, data_addr, sizeof(C_dentry_t));
+//    sdread(Current_Direction, data_addr, sizeof(C_dentry_t));
 
     return ;
 }
@@ -1024,9 +1068,8 @@ int flink_soft(char *target, char *link)
     for(i = 0; i < BLOCK_SIZE; i++)
         File_Buff[i] = 0;
     strcpy(File_Buff, Current_Direction->current_path);
-    strcpy(File_Buff + strlen(Current_Direction->current_path), "/");
+    strcpy(File_Buff + strlen(Current_Direction->current_path), " ");
     strcpy(File_Buff + strlen(Current_Direction->current_path) + 1, target);
-    sdwrite(File_Buff, data_addr, BLOCK_SIZE);
 
     inode_buff->create_time = FS_TIME;
     inode_buff->modify_time = FS_TIME;
@@ -1041,7 +1084,16 @@ int flink_soft(char *target, char *link)
     for(i = 0; i < MAX_DIR_BLOCK; i++)
         inode_buff->direct[i] = 0;
 
+    for(i = 0; i < inode_buff->used_size; i++)
+    {
+        my_printf("%c",File_Buff[i]);
+        screen_reflush();          
+    }
+    my_printf("\n");
+
+//    my_printf("data_addr = 0x%x\n", data_addr);
     sdwrite(inode_buff, inode_addr, sizeof(inode_t));
+    sdwrite(File_Buff, data_addr, BLOCK_SIZE);
 
     return ;
 }

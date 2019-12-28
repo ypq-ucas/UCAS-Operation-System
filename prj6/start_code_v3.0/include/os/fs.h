@@ -40,7 +40,7 @@
 #define D_WR    0x8     // Write Mode
 
 #define FS_SIZE         (1 << 30)           // File System Size = 1GB
-#define FS_START_ADDR   (1 << 29)           // Start At 512MB in SD Card    
+#define FS_START_ADDR   (1 << 30)           // Start At 512MB in SD Card    
 #define BLOCK_SIZE      (0x1000)            // Block Size 4K Bytes
 #define INODE_SIZE      (0x200)             // Inode Size 512 Bytes
 

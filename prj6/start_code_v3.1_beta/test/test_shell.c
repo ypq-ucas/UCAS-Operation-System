@@ -173,14 +173,24 @@ int do_cmd(char cmd[20], int argc, char argv[10][100])
             char *para = "\0";
             sys_fln(target, link, para);   // hard link            
         }
+        else if(!strcmp(cmd,"find"))
+        {
+            char *path = (char *)(&argv[0]);
+            char *fname = (char *)(&argv[1]);
+            sys_ffind(path, fname);   // find            
+        }
         break;
+
     case 4:
         if(!strcmp(cmd,"ln"))
         {
             char *para = (char *)(&argv[0]);
             char *target = (char *)(&argv[1]);
             char *link = (char *)(&argv[2]);
-            sys_fln(target, link, para);   // hard link            
+            if(!strcmp(para,"-s"))
+                sys_fln(target, link, para);   // soft link 
+            else
+                printf("unknown argument, try -s to create a soft link\n");           
         }
         break; 
 

@@ -43,7 +43,7 @@ uint32_t time_elapsed;
 #define D_WR    0x8     // Write Mode
 #define L_TYPE  0x9     // Link Type
 
-#define FS_SIZE         (1 << 30)           // File System Size = 1GB
+#define FS_SIZE         (111 << 28)          // File System Size = 1GB
 #define FS_START_ADDR   (1 << 29)           // Start At 512MB in SD Card    
 #define BLOCK_SIZE      (0x1000)            // Block Size 4K Bytes
 #define INODE_SIZE      (0x200)             // Inode Size 512 Bytes
